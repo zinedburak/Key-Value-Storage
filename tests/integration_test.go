@@ -82,7 +82,6 @@ func TestGetAllKeyValue(t *testing.T) {
 	respBytes, _ := ioutil.ReadAll(resp.Body)
 	respString := string(respBytes)
 	respString = strings.ReplaceAll(respString, "\"", "")
-	fmt.Println(respString)
 	assert.NotNil(t, respString, "Response is Empty")
 
 }
