@@ -1,4 +1,5 @@
 # Key-Value-Storage
+[![Go](https://github.com/zinedburak/Key_Value_Storage/actions/workflows/go.yml/badge.svg)](https://github.com/zinedburak/Key_Value_Storage/actions/workflows/go.yml)
 
 This is a simple In memory key value storage application that is written in Golang
 
