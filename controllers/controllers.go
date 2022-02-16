@@ -25,7 +25,7 @@ func SetKeyValue(c *fiber.Ctx) error {
 		return err
 	}
 	Db.Set(cKeyValue.Key, cKeyValue.Value)
-	return c.JSON(cKeyValue.Key)
+	return c.JSON(cKeyValue)
 }
 
 func GetAllKeyValue(c *fiber.Ctx) error {
