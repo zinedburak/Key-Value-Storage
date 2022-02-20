@@ -2,12 +2,12 @@ package routes
 
 import (
 	"Key_Value_Storage/controllers"
-	"github.com/gofiber/fiber/v2"
+	"net/http"
 )
 
-func Setup(app *fiber.App) {
-	app.Get("/api/get-key-value", controllers.GetKeyValue)
-	app.Post("/api/set-key-value", controllers.SetKeyValue)
-	app.Get("/api/get-all-key-value", controllers.GetAllKeyValue)
-	app.Get("/api/save-all-key-value", controllers.FlushAllData)
+func Setup() {
+	http.HandleFunc("/api/get-key-value", controllers.GetKeyValue)
+	http.HandleFunc("/api/set-key-value", controllers.SetKeyValue)
+	http.HandleFunc("/api/get-all-key-value", controllers.GetAllKeyValue)
+	http.HandleFunc("/api/save-all-key-value", controllers.FlushAllData)
 }
