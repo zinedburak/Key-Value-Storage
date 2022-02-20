@@ -6,9 +6,6 @@ import (
 	"Key_Value_Storage/routes"
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http/httptest"
@@ -17,71 +14,66 @@ import (
 	"time"
 )
 
-func SetupApp() (*fiber.App, *models.Store) {
-	app := fiber.New()
-	app.Use(cors.New(cors.Config{
-		AllowCredentials: true,
-	}))
-	routes.Setup(app)
-	Db := models.CreateStore("HelloWorld.json", 5*time.Minute)
-	controllers.Db = Db
-	return app, Db
-}
-
 func TestSetKeyValue(t *testing.T) {
-	app, Db := SetupApp()
-
-	var pbody models.KeyValue
-	pbody.Key = "TestKey"
-	pbody.Value = "TestValue"
-	body, _ := json.Marshal(pbody)
+	db := setupApp()
+	var pBody models.KeyValue
+	pBody.Key = "TestKey"
+	pBody.Value = "TestValue"
+	body, _ := json.Marshal(pBody)
 	req := httptest.NewRequest("POST", "/api/set-key-value", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	_, err := app.Test(req, 100)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	assert.NotNil(t, Db.Get("TestKey"))
-	assert.Equal(t, "TestValue", Db.Get("TestKey"))
+	w := httptest.NewRecorder()
+	controllers.SetKeyValue(w, req)
+	assert.NotNil(t, db.Get("TestKey"))
+	assert.Equal(t, "TestValue", db.Get("TestKey"))
 }
 
 func TestGetKeyValue(t *testing.T) {
-	app, Db := SetupApp()
-
-	Db.Set("TestKey", "TestValue")
+	db := setupApp()
+	db.Set("TestKey", "TestValue")
 	pBody := map[string]string{
 		"key": "TestKey",
 	}
 	body, _ := json.Marshal(pBody)
 	req := httptest.NewRequest("GET", "/api/get-key-value", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	resp, err := app.Test(req)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	w := httptest.NewRecorder()
+
+	controllers.GetKeyValue(w, req)
+	resp := w.Result()
 	respBytes, _ := ioutil.ReadAll(resp.Body)
 	respString := string(respBytes)
 	respString = strings.ReplaceAll(respString, "\"", "")
-	dbResp := Db.Get("TestKey")
+	dbResp := db.Get("TestKey")
 	assert.NotNil(t, respString, "The response is Nil")
 	assert.Equal(t, dbResp, respString, "The response from the DB and API does not match")
 }
 
 func TestGetAllKeyValue(t *testing.T) {
-	app, Db := SetupApp()
-	Db.Set("TestKey", "TestValue")
-	Db.Set("TestKey1", "TestValue1")
-	Db.Set("TestKey2", "TestValue2")
+	db := setupApp()
+	db.Set("TestKey", "TestValue")
+	db.Set("TestKey1", "TestValue1")
+	db.Set("TestKey2", "TestValue2")
 
 	req := httptest.NewRequest("GET", "/api/get-all-key-value", nil)
-
-	resp, err := app.Test(req)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	w := httptest.NewRecorder()
+	controllers.GetAllKeyValue(w, req)
+	resp := w.Result()
 	respBytes, _ := ioutil.ReadAll(resp.Body)
 	respString := string(respBytes)
 	respString = strings.ReplaceAll(respString, "\"", "")
 	assert.NotNil(t, respString, "Response is Empty")
 
+}
+
+var routesCheck bool
+
+func setupApp() *models.Store {
+	if !routesCheck {
+		routes.Setup()
+		routesCheck = true
+	}
+	db := models.CreateStore("Testing.json", 5*time.Minute)
+	controllers.Db = db
+	return db
 }
