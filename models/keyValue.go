@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -14,8 +15,9 @@ type KeyValue struct {
 }
 
 type Store struct {
-	keyValue map[string]string `json:"keyValue"`
+	keyValue map[string]string
 	path     string
+	sync.Mutex
 }
 
 func CreateStore(dbName string, saveInterval time.Duration) *Store {
@@ -27,7 +29,11 @@ func CreateStore(dbName string, saveInterval time.Duration) *Store {
 		fmt.Println("DB file exist loading data from file")
 		store.loadDataFromFile(store.path)
 	} else {
-		os.Create(store.path)
+		_, err := os.Create(store.path)
+		if err != nil {
+			fmt.Println("Error Creating File")
+			os.Exit(-1)
+		}
 	}
 	ticker := time.NewTicker(saveInterval)
 	go func() {
@@ -42,11 +48,16 @@ func CreateStore(dbName string, saveInterval time.Duration) *Store {
 }
 
 func (k Store) Get(key string) string {
-	return k.keyValue[key]
+	k.Lock()
+	value := k.keyValue[key]
+	defer k.Unlock()
+	return value
 }
 
 func (k Store) Set(key string, value string) {
+	k.Lock()
 	k.keyValue[key] = value
+	defer k.Unlock()
 }
 
 func (k Store) GetAll() map[string]string {
